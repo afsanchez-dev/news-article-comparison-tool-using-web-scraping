@@ -1,0 +1,46 @@
+@startuml system_context
+!include <C4/C4_Component>
+
+Container(WebApp, "Single-Page Application", "TypeScript y React", "Proporciona la interfaz mediante la cual el usuario final puede buscar, seleccionar y comparar noticias")
+Container_Boundary(SysBound, "Scraper API") {
+  Component(AppSupervisor, "AppSupervisor", "Elixir/Supervisor", "Proceso encargado de gestionar el ciclo de vida del pool de conxiones y el ScraperManager")
+  Component(ConnectionManager, "Asignador de conexiones", "PlugCowboy/ConnectionManagerProcess", "Proceso encargado de asignar un proceso manejador para las conexiones entrantes")
+  Boundary(ConnectionPool, "Pool de conexiones") {
+    Component(ConnProc1, "Manejador de conexión 1", "PlugCowboy/PoolProcess","Proceso que gestiona las conexiones entrantes al servidor web")
+    Component(ConnProc2, "Manejador de conexión N", "PlugCowboy/PoolProcess","Proceso que gestiona las conexiones entrantes al servidor web")
+  }
+  Component(ScraperManager, "ScraperManager", "Elixir/GenServer", "Proceso intermediario entre los manejadores de conexiones y el pipeline de transformación de artículos")
+  Component(PipelineSupervisor, "PipelineSupervisor", "Elixir/Supervisor", "Proceso encargado de gestionar el ciclo de vida del pipeline")
+  Boundary(PipelineBound, "Pipeline"){
+    Component(ScraperEventManager, "ScraperEventManager", "Elixir/GenStageProducer", "Proceso encargado de propagar las operaciones al resto del pipeline")
+    Component(ScraperRequestHandler1, "ScraperRequestHandler1", "Elixir/GenStageProducerConsumer", "Proceso encargado de realizar las peticiones HTTP a las aplicaciones web de los periódicos")
+    Component(ScraperRequestHandlerN, "ScraperRequestHandlerN", "Elixir/GenStageProducerConsumer", "Proceso encargado de realizar las peticiones HTTP a las aplicaciones web de los periódicos")
+    Component(ScraperParsingHandler1, "ScraperParsingHandler1", "Elixir/GenStageConsumer", "Proceso encargado de realizar la transformación de las respuestas a las peticiones HTTP")
+    Component(ScraperParsingHandlerN, "ScraperParsingHandlerN", "Elixir/GenStageConsumer", "Proceso encargado de realizar la transformación de las respuestas a las peticiones HTTP")
+  }
+}
+Rel(AppSupervisor, ConnectionManager, "Supervisa")
+Rel(AppSupervisor, ScraperManager, "Supervisa")
+Rel(ConnectionManager, ConnProc1, "Asigna conexión entrante")
+Rel(ConnectionManager, ConnProc2, "Asigna conexión entrante")
+Rel(ConnProc1, ScraperManager, "Envía operación a realizar")
+Rel(ConnProc2, ScraperManager, "Envía operación a realizar")
+Rel(ScraperManager, ConnProc1, "Reenvía respuesta transformada")
+Rel(ScraperManager, ConnProc2, "Reenvía respuesta transformada")
+Rel(ScraperManager, PipelineSupervisor, "Crea")
+Rel(PipelineSupervisor, ScraperEventManager, "Supervisa")
+Rel(PipelineSupervisor, ScraperRequestHandler1, "Supervisa")
+Rel(PipelineSupervisor, ScraperRequestHandlerN, "Supervisa")
+Rel(ScraperManager, ScraperEventManager, "Envía operación a realizar")
+Rel(ScraperEventManager, ScraperRequestHandler1, "Asigna petición a realizar")
+Rel(ScraperEventManager, ScraperRequestHandlerN, "Asigna petición a realizar")
+Rel(ScraperRequestHandler1, ScraperEventManager, "Notifica sobre su capacidad para realizar peticiones")
+Rel(ScraperRequestHandlerN, ScraperEventManager, "Notifica sobre su capacidad para realizar peticiones")
+Rel(ScraperRequestHandler1, ScraperParsingHandler1, "Crea y envía resultado de la petición para transformar")
+Rel(ScraperRequestHandlerN, ScraperParsingHandlerN, "Crea y envía resultado de la petición para transformar")
+Rel(ScraperParsingHandler1, ScraperManager, "Envía resultado de la transformación")
+Rel(ScraperParsingHandlerN, ScraperManager, "Envía resultado de la transformación")
+Rel(WebApp, ConnectionManager, "Realiza petición a la API [HTTP]")
+Rel(ConnProc1, WebApp, "Envía resultado de la petición [JSON/HTTP]")
+Rel(ConnProc2, WebApp, "Envía resultado de la petición [JSON/HTTP]")
+@enduml

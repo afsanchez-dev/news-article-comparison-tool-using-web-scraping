@@ -1,0 +1,11 @@
+# Vite configuration file
+vite.config.ts
+vitest.config.ts
+
+#Jest
+jest.config.js
+# Tests
+/tests
+
+# tsconfig file
+tsconfig.json

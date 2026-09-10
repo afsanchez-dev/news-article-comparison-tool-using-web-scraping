@@ -1,0 +1,1 @@
+export { ErrorType } from './errorTypes'

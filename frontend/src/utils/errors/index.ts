@@ -1,0 +1,1 @@
+export { getError } from './errorHandler'
