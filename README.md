@@ -1,3 +1,5 @@
+> **IMPORTANT NOTICE**: Some of the `.html` files previously located in `backend/priv/test` exposed secrets belonging to news media providers. For security reasons, the repository had to be migrated to a new one, and the affected files were removed. As a result, some tests that depended on these files may fail until they are updated.
+
 # contrast_app
 
 A web application for **searching and comparing news articles across the main Spanish
